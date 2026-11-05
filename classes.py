@@ -1,14 +1,9 @@
-import pygame
-import sys
-
-pygame.init()
-
 class post: 
     def __init__(self, title, content):
         self.videos = videos
 
     def videos(self):
-        videos = [
+        videos = {
             {
                 "topic": "Platte aarde",
                 "title": "Is de aarde eigenlijk plat?",
@@ -51,4 +46,4 @@ class post:
                 "description": "Ontdek hoe wetenschappers zwaartekracht onderzoeken.",
                 "color": (45, 110, 145)
             },
-        ]
+        }

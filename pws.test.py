@@ -2,6 +2,8 @@
 import pygame
 import sys
 
+import classes
+
 pygame.init()
 
 # SCHERM
