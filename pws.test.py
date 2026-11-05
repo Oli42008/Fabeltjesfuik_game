@@ -4,373 +4,191 @@ import sys
 
 pygame.init()
 
-# VENSTER
-WIDTH, HEIGHT = 600, 800
+# SCHERM
+WIDTH = 600
+HEIGHT = 800
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("De Fabeltjesfuik")
 
 clock = pygame.time.Clock()
 
-# KLEUREN
-BACKGROUND = (30, 32, 45)
-BLACK = (12, 12, 15)
-WHITE = (240, 240, 245)
-GREEN = (70, 220, 150)
-GREY = (130, 135, 150)
-RED = (240, 90, 110)
-BLUE = (75, 130, 220)
-
-# LETTERTYPES
-font = pygame.font.SysFont("arial", 17)
-small = pygame.font.SysFont("arial", 13)
-bold = pygame.font.SysFont("arial", 21, bold=True)
+font = pygame.font.SysFont("arial", 18)
 title_font = pygame.font.SysFont("arial", 25, bold=True)
 
-# TELEFOON EN SCHERM
-PHONE = pygame.Rect(100, 35, 400, 720)
-VIEW = pygame.Rect(125, 190, 350, 495)
 
-# SPELGEGEVENS
-scroll = 0
-likes = {}
-saved = set()
-watched = set()
-recommended = set()
+# CLASS TELEFOON
+class Telefoon:
 
-like_counts = {}
-message = "Welkom! Begin met scrollen."
-message_timer = 4
+    def tekenen(self):
 
-# HULPFUNCTIE VOOR TEKST
-def draw_text(text, x, y, color=WHITE, f=font):
-    image = f.render(text, True, color)
-    screen.blit(image, (x, y))
+        pygame.draw.rect(screen, (100, 105, 120),
+                         (100, 35, 400, 720), border_radius=40)
+
+        pygame.draw.rect(screen, (20, 22, 30),
+                         (110, 45, 380, 700), border_radius=35)
+
+        pygame.draw.rect(screen, (40, 42, 48),
+                         (235, 65, 130, 10), border_radius=5)
 
 
-def draw_wrapped(text, x, y, max_width, color=WHITE):
-    words = text.split()
-    line = ""
-    line_y = y
+# CLASS POST
+class Post:
 
-    for word in words:
-        test = line + word + " "
-        if font.size(test)[0] > max_width:
-            draw_text(line, x, line_y, color)
-            line = word + " "
-            line_y += 24
-        else:
-            line = test
+    def __init__(self, info):
+        self.info = info
+        self.likes = False
+        self.bewaard = False
 
-    if line:
-        draw_text(line, x, line_y, color)
+    def tekenen(self, y):
 
+        pygame.draw.rect(screen, (55, 60, 80),
+                         (130, y, 340, 160), border_radius=15)
 
-# NIEUWE AANBEVELINGEN
-def update_algorithm(topic):
-    global message, message_timer
-
-    count = like_counts.get(topic, 0)
-
-    if count == 3 and topic not in recommended:
-        recommended.add(topic)
-
-        message = "Het algoritme ontdekt jouw interesse!"
-        message_timer = 4
-
-        # Meer video's over hetzelfde onderwerp
-        if topic == "Platte aarde":
-            extra = [
-                {
-                    "topic": topic,
-                    "title": "Nog meer over de platte aarde",
-                    "description": "Een nieuwe video met beweringen van voorstanders. Controleer de bronnen!",
-                    "color": (110, 75, 145)
-                },
-                {
-                    "topic": topic,
-                    "title": "Waarom zou de aarde plat zijn?",
-                    "description": "Bekijk hoe dezelfde theorie steeds opnieuw wordt besproken.",
-                    "color": (95, 70, 145)
-                },
-                {
-                    "topic": topic,
-                    "title": "De waarheid over onze planeet?",
-                    "description": "Een video met beweringen die je kritisch kunt onderzoeken.",
-                    "color": (115, 80, 150)
-                }
-            ]
-        else:
-            extra = [
-                {
-                    "topic": topic,
-                    "title": "Meer over " + topic,
-                    "description": "Het algoritme denkt dat je dit onderwerp interessant vindt.",
-                    "color": (90, 90, 150)
-                }
-                for _ in range(3)
-            ]
-
-        videos.extend(extra)
-
-
-# TELEFOON TEKENEN
-def draw_phone():
-    pygame.draw.rect(
-        screen, (18, 19, 27),
-        (105, 45, 390, 710), border_radius=48
-    )
-
-    pygame.draw.rect(
-        screen, (110, 115, 130),
-        (100, 35, 400, 720), border_radius=50
-    )
-
-    pygame.draw.rect(
-        screen, BLACK,
-        (106, 41, 388, 708), border_radius=45
-    )
-
-    pygame.draw.rect(
-        screen, (24, 27, 38),
-        (120, 65, 360, 680), border_radius=35
-    )
-
-    pygame.draw.rect(
-        screen, (40, 42, 48),
-        (235, 77, 100, 12), border_radius=6
-    )
-
-    pygame.draw.circle(screen, (45, 65, 95), (355, 83), 7)
-
-    pygame.draw.rect(
-        screen, WHITE,
-        (235, 720, 130, 5), border_radius=3
-    )
-
-    pygame.draw.rect(
-        screen, (100, 105, 120),
-        (94, 175, 6, 75), border_radius=3
-    )
-
-    pygame.draw.rect(
-        screen, (100, 105, 120),
-        (94, 270, 6, 45), border_radius=3
-    )
-
-    pygame.draw.rect(
-        screen, (100, 105, 120),
-        (500, 190, 6, 100), border_radius=3
-    )
-
-
-# VIDEO KAART TEKENEN
-def draw_video(video, index, y):
-    card = pygame.Rect(130, y, 340, 415)
-
-    pygame.draw.rect(
-        screen, (42, 46, 62),
-        card, border_radius=16
-    )
-
-    # Video-afbeelding / achtergrond
-    picture = pygame.Rect(140, y + 10, 320, 190)
-
-    pygame.draw.rect(
-        screen, video["color"],
-        picture, border_radius=12
-    )
-
-    # Decoratieve cirkel
-    pygame.draw.circle(
-        screen, (180, 190, 220),
-        (300, y + 100), 48
-    )
-
-    pygame.draw.circle(
-        screen, video["color"],
-        (300, y + 100), 40
-    )
-
-    draw_text(
-        "VIDEO",
-        275, y + 88,
-        WHITE, bold
-    )
-
-    # Onderwerp
-    draw_text(
-        video["topic"].upper(),
-        145, y + 215,
-        GREEN, small
-    )
-
-    # Titel
-    draw_wrapped(
-        video["title"],
-        145, y + 240,
-        300, WHITE
-    )
-
-    # Beschrijving
-    draw_wrapped(
-        video["description"],
-        145, y + 290,
-        300, GREY
-    )
-
-    # Knoppen
-    like_rect = pygame.Rect(145, y + 355, 95, 38)
-    save_rect = pygame.Rect(250, y + 355, 95, 38)
-
-    pygame.draw.rect(
-        screen,
-        RED if index in likes else (65, 70, 85),
-        like_rect, border_radius=9
-    )
-
-    pygame.draw.rect(
-        screen,
-        BLUE if index in saved else (65, 70, 85),
-        save_rect, border_radius=9
-    )
-
-    draw_text(
-        "♥ Like",
-        like_rect.x + 19,
-        like_rect.y + 9
-    )
-
-    draw_text(
-        "★ Bewaar",
-        save_rect.x + 9,
-        save_rect.y + 9
-    )
-
-    return like_rect, save_rect
-
-
-# HOOFDLOOP
-running = True
-view_time = 0
-last_video = None
-
-while running:
-    dt = clock.tick(60) / 1000
-
-    screen.fill(BACKGROUND)
-    draw_phone()
-
-    # TITEL
-    draw_text("ForYou", 140, 115, WHITE, title_font)
-    draw_text("Ontdek video's", 140, 150, GREY, small)
-
-    # SCROLLGEBIED
-    screen.set_clip(VIEW)
-
-    current_buttons = []
-
-    for i, video in enumerate(videos):
-        y = 200 + i * 430 - scroll
-
-        if y < 690 and y + 415 > 190:
-            like_rect, save_rect = draw_video(video, i, y)
-
-            current_buttons.append(
-                (i, like_rect, save_rect)
-            )
-
-    screen.set_clip(None)
-
-    # WELKE VIDEO WORDT BEKEKEN?
-    active_video = None
-
-    for i, video in enumerate(videos):
-        y = 200 + i * 430 - scroll
-
-        if y <= 205 and y + 415 > 205:
-            active_video = i
-            break
-
-    if active_video is not None:
-        if active_video == last_video:
-            view_time += dt
-        else:
-            last_video = active_video
-            view_time = 0
-
-        if view_time >= 5 and active_video not in watched:
-            watched.add(active_video)
-
-            topic = videos[active_video]["topic"]
-            like_counts[topic] = like_counts.get(topic, 0) + 1
-
-            view_time = 0
-
-    # MELDING
-    if message_timer > 0:
-        message_timer -= dt
-
-        pygame.draw.rect(
-            screen, (55, 65, 85),
-            (135, 675, 330, 35),
-            border_radius=8
+        # Onderwerp
+        onderwerp = font.render(
+            self.info["onderwerp"], True, (70, 220, 150)
         )
+        screen.blit(onderwerp, (145, y + 15))
 
-        draw_text(
-            message, 145, 685,
-            GREEN, small
+        # Titel
+        titel = font.render(
+            self.info["titel"], True, (255, 255, 255)
         )
+        screen.blit(titel, (145, y + 50))
 
-    # ALGORITME-INFORMATIE
-    if recommended:
-        draw_text(
-            "Je feed wordt persoonlijker...",
-            140, 160, GREEN, small
+        # Beschrijving
+        beschrijving = font.render(
+            self.info["beschrijving"], True, (180, 180, 190)
         )
+        screen.blit(beschrijving, (145, y + 80))
 
-    # BEDIENING
-    for event in pygame.event.get():
+        # Like
+        if self.likes:
+            like_tekst = "Liked"
+        else:
+            like_tekst = "Like"
 
-        if event.type == pygame.QUIT:
-            running = False
+        like = font.render(like_tekst, True, (240, 90, 110))
+        screen.blit(like, (145, y + 120))
 
-        # SCROLLEN
-        if event.type == pygame.MOUSEWHEEL:
-            scroll -= event.y * 45
-            scroll = max(
-                0,
-                min(scroll, max(0, len(videos) * 430 - 495))
-            )
+        # Bewaren
+        if self.bewaard:
+            bewaar_tekst = "Bewaard"
+        else:
+            bewaar_tekst = "Bewaar"
 
-        # KNOPPEN
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
+        bewaar = font.render(bewaar_tekst, True, (75, 130, 220))
+        screen.blit(bewaar, (300, y + 120))
 
-                mx, my = event.pos
 
-                for i, like_rect, save_rect in current_buttons:
+# CLASS GAME
+class Game:
 
-                    if like_rect.collidepoint(mx, my):
-                        if i not in likes:
-                            likes.add(i)
+    def __init__(self):
 
-                            topic = videos[i]["topic"]
-                            like_counts[topic] = (
-                                like_counts.get(topic, 0) + 1
-                            )
+        self.telefoon = Telefoon()
+        self.scroll = 0
+        self.posts = []
 
-                            update_algorithm(topic)
+        # Alle video's
+        videos = [
+            {
+                "onderwerp": "Platte aarde",
+                "titel": "Is de aarde plat?",
+                "beschrijving": "Bekijk deze theorie."
+            },
+            {
+                "onderwerp": "Wetenschap",
+                "titel": "De aarde vanuit de ruimte",
+                "beschrijving": "Bekijk onze planeet."
+            },
+            {
+                "onderwerp": "Maanlanding",
+                "titel": "Was de maanlanding echt?",
+                "beschrijving": "Ontdek meer over de maan."
+            },
+            {
+                "onderwerp": "Dieren",
+                "titel": "Bijzondere dieren",
+                "beschrijving": "Ontdek bijzondere dieren."
+            }
+        ]
 
-                    elif save_rect.collidepoint(mx, my):
-                        if i in saved:
-                            saved.remove(i)
-                        else:
-                            saved.add(i)
+        # Van iedere video een post maken
+        for video in videos:
+            self.posts.append(Post(video))
 
-                        message = "Video opgeslagen!"
-                        message_timer = 2
 
-    pygame.display.flip()
+    def tekenen(self):
 
-pygame.quit()
-sys.exit()
+        screen.fill((30, 32, 45))
+
+        self.telefoon.tekenen()
+
+        # Titel
+        titel = title_font.render(
+            "De Fabeltjesfuik", True, (255, 255, 255)
+        )
+        screen.blit(titel, (175, 100))
+
+        # Posts tekenen
+        for i in range(len(self.posts)):
+
+            y = 180 + i * 180 - self.scroll
+
+            self.posts[i].tekenen(y)
+
+
+    def klikken(self, positie):
+
+        x, y = positie
+
+        for i in range(len(self.posts)):
+
+            post_y = 180 + i * 180 - self.scroll
+
+            # Like knop
+            if 140 < x < 250 and post_y + 110 < y < post_y + 155:
+
+                self.posts[i].likes = not self.posts[i].likes
+
+            # Bewaar knop
+            if 290 < x < 400 and post_y + 110 < y < post_y + 155:
+
+                self.posts[i].bewaard = not self.posts[i].bewaard
+
+
+    def starten(self):
+
+        running = True
+
+        while running:
+
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    running = False
+
+                # Scrollen
+                if event.type == pygame.MOUSEWHEEL:
+                    self.scroll -= event.y * 30
+                    self.scroll = max(0, min(self.scroll, 250))
+
+                # Klikken
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        self.klikken(event.pos)
+
+            self.tekenen()
+
+            pygame.display.flip()
+            clock.tick(60)
+
+        pygame.quit()
+        sys.exit()
+
+
+# SPEL STARTEN
+game = Game()
+game.starten()
