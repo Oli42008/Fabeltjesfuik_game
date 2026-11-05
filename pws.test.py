@@ -82,7 +82,7 @@ class Post:
         screen.blit(bewaar, (300, y + 120))
 
 
-# CLASS GAME
+
 class Game:
 
     def __init__(self):
